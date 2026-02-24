@@ -1,0 +1,21 @@
+name: efmct
+channels:
+  - astra-toolbox
+  - conda-forge
+  - defaults
+  - https://repo.anaconda.com/pkgs/main
+  - https://repo.anaconda.com/pkgs/r
+dependencies:
+  - astra-toolbox=2.3.0
+  - pip=25.0
+  - python=3.12.8
+  - pip:
+      - diffusers==0.32.2
+      - numpy==2.2.2
+      - tifffile==2025.2.18
+      - torch==2.5.1
+      - torchvision==0.20.1
+      - tqdm==4.67.1
+      - transformers==4.48.3
+      - scikit-image==0.26.0
+
