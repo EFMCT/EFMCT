@@ -1,14 +1,21 @@
-**Efficient Flow Matching for Sparse-View CT Reconstruction**
+**Efficient Flow Matching for Sparse-View CT Reconstruction** (MICCAI 2026)
 
-This repository contains the implementation of FMCT/EFMCT, flow matching-based methods for sparse-view CT reconstruction.
+Jiayang Shi, Lincen Yang, Zhong Li, Tristan van Leeuwen, Daniel M. Pelt, K. Joost Batenburg
+
+Generative models, particularly Diffusion Models (DM), have shown strong potential for Computed Tomography (CT) reconstruction serving as expressive priors for solving ill-posed inverse problems. However, diffusion-based reconstruction relies on Stochastic Differential Equations (SDEs) for forward diffusion and reverse denoising, where such stochasticity can interfere with repeated data consistency corrections in CT reconstruction. Since CT reconstruction is often time-critical in clinical and interventional scenarios, improving reconstruction efficiency is essential. In contrast, Flow Matching (FM) models sampling as a deterministic Ordinary Differential Equation (ODE), yielding smooth trajectories without stochastic noise injection. This deterministic formulation is naturally compatible with repeated data consistency operations. Furthermore, we observe that FM-predicted velocity fields exhibit strong correlations across adjacent steps. Motivated by this, we propose an FM-based CT reconstruction framework (FMCT) and an efficient variant (EFMCT) that reuses previously predicted velocity fields over consecutive steps to substantially reduce the number of Neural network Function Evaluations (NFEs), thereby improving inference efficiency. We provide theoretical analysis showing that the error introduced by velocity reuse is bounded when combined with data consistency operations. Extensive experiments demonstrate that FMCT/EFMCT achieve competitive reconstruction quality while significantly improving computational efficiency compared with diffusion-based methods.
+
+<img src="figures/method.png" style="width:100%;" />
 
 ## Table of Contents
 - [Table of Contents](#table-of-contents)
 - [Environment Requirements](#environment-requirements)
 - [Datasets](#datasets)
-- [Pretrained Flow Matching Models](#pretrained-diffusion-models)
-- [CT Reconstruction](#ct-reconstruction-methods)
-- [Training Flow Matching from Scratch](#training-diffusion-models-from-scratch)
+- [Pretrained Flow Matching Models](#pretrained-flow-matching-models)
+- [CT Reconstruction](#ct-reconstruction)
+  - [FMCT (no velocity reuse)](#fmct-no-velocity-reuse)
+  - [EFMCT (velocity reuse)](#efmct-velocity-reuse)
+  - [Diffusion-Based Baselines](#diffusion-based-baselines)
+- [Training Flow Matching from Scratch](#training-flow-matching-from-scratch)
 
 ## Environment Requirements
 - At least one Nvidia GPU for training/inference.
