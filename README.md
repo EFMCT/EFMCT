@@ -16,6 +16,7 @@ Generative models, particularly Diffusion Models (DM), have shown strong potenti
   - [EFMCT (velocity reuse)](#efmct-velocity-reuse)
   - [Diffusion-Based Baselines](#diffusion-based-baselines)
 - [Training Flow Matching from Scratch](#training-flow-matching-from-scratch)
+- [Proof of Proposition 1](#proof-of-proposition-1)
 - [Citation](#citation)
 
 ## Environment Requirements
@@ -68,6 +69,9 @@ For diffusion-based comparison methods, please refer to the [DM4CT Benchmark](ht
 
 ## Training Flow Matching from Scratch
 Training a flow matching model from scratch can be performed using [train_flow.py](train_flow.py).
+
+## Proof of Proposition 1
+The complete proof of Proposition 1, bounding the error introduced by velocity reuse, is available in [proof.pdf](proof.pdf). It derives the single-step reuse error and the accumulated error over `M` consecutive reuse steps under a `κ`-non-expansive data consistency operation.
 
 ## Citation
 If you find this work useful, please cite:
