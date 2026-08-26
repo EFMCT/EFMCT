@@ -97,6 +97,49 @@
           margin: 1.1rem 0;
           text-align: center;
       }
+      details.expand {
+          border: 1px solid #e2e8f2;
+          border-left: 3px solid #9db9e0;
+          border-radius: 5px;
+          background: #fbfcfe;
+          margin: 0.9rem 0;
+          padding: 0 1rem;
+      }
+      details.expand > summary {
+          cursor: pointer;
+          list-style: none;
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+          padding: 0.7rem 0;
+          font-weight: 600;
+          color: #2b5fa8;
+          text-align: left;
+      }
+      details.expand > summary::-webkit-details-marker { display: none; }
+      details.expand > summary::before {
+          content: "";
+          flex: none;
+          width: 6px;
+          height: 6px;
+          border: solid #2b5fa8;
+          border-width: 0 2px 2px 0;
+          transform: translateY(-2px) rotate(45deg);
+          transition: transform 0.15s ease;
+      }
+      details.expand[open] > summary::before {
+          transform: translateY(1px) rotate(-135deg);
+      }
+      details.expand > summary:hover { color: #1c4a86; }
+      details.expand > summary:focus-visible {
+          outline: 2px solid #2b5fa8;
+          outline-offset: 2px;
+          border-radius: 3px;
+      }
+      details.expand > p {
+          margin-top: 0 !important;
+          padding-bottom: 0.9rem;
+      }
       .takeaway {
           border-left: 4px solid #3273dc;
           background: #f6f9fe;
@@ -135,6 +178,9 @@
           color: #555;
           margin-top: 0.3rem;
       }
+      /* Bulma .column is a flex item: without min-width:0 the nowrap table's
+         min-content width stretches the whole section past the container. */
+      #results .column { min-width: 0; }
       .breakout {
           width: min(1380px, 96vw);
           margin-left: 50%;
@@ -376,22 +422,28 @@
         </div>
 
         <div class="content has-text-justified">
-          <p>
-            Diffusion-based reconstruction models both the forward and the reverse process as an SDE. The
-            repeated data consistency corrections that CT reconstruction requires interfere with that
-            stochastic evolution, producing a <i>push-and-pull</i> effect between prior-driven denoising and
-            physics-based correction. In practice this costs iterations: diffusion solvers typically need
-            hundreds to thousands of NFEs.
-          </p>
-          <p>
-            Flow matching instead transports probability mass deterministically along an ODE. Sampling
-            follows a smooth trajectory with no noise injection, which interacts far more coherently with
-            repeated data consistency corrections. Moreover, the velocity fields predicted along that
-            trajectory stay <b>almost perfectly aligned between neighbouring steps</b> — the cosine
-            similarity remains above 0.99 for nearly the entire trajectory, and stays that way even when a
-            data consistency correction is applied in between. Re-evaluating the network at every single
-            integration step is therefore largely redundant.
-          </p>
+          <details class="expand">
+            <summary>Diffusion solvers need a lot of iterations</summary>
+            <p>
+              Diffusion-based reconstruction models both the forward and the reverse process as an SDE. The
+              repeated data consistency corrections that CT reconstruction requires interfere with that
+              stochastic evolution, producing a <i>push-and-pull</i> effect between prior-driven denoising
+              and physics-based correction. In practice this costs iterations: diffusion solvers typically
+              need hundreds to thousands of NFEs.
+            </p>
+          </details>
+          <details class="expand">
+            <summary>Flow matching has better aligned steps</summary>
+            <p>
+              Flow matching instead transports probability mass deterministically along an ODE. Sampling
+              follows a smooth trajectory with no noise injection, which interacts far more coherently with
+              repeated data consistency corrections. Moreover, the velocity fields predicted along that
+              trajectory stay <b>almost perfectly aligned between neighbouring steps</b> &mdash; the cosine
+              similarity remains above 0.99 for nearly the entire trajectory, and stays that way even when a
+              data consistency correction is applied in between. Re-evaluating the network at every single
+              integration step is therefore largely redundant.
+            </p>
+          </details>
         </div>
       </div>
     </div>
@@ -649,14 +701,17 @@
             visibility. Zoom in for more details
             (<a href="./static/images/result.pdf">full-resolution PDF</a>).
           </p>
-          <p>
-            Although ADMM-TV achieves high PSNR/SSIM, its reconstructions are overly smooth and lack fine
-            details. Diffusion-based methods and FMCT/EFMCT produce visually sharper and more detailed
-            reconstructions, though they do not always exactly match the reference. This behavior is
-            expected in sparse-view CT, where the problem is severely ill-posed and multiple reconstructions
-            can satisfy the measurements. Generative methods balance data consistency with adherence to the
-            learned prior, which may lead to small deviations in fine-scale details.
-          </p>
+          <details class="expand">
+            <summary>Sometimes ADMM-TV achieves the best PSNR/SSIM?</summary>
+            <p>
+              Although ADMM-TV achieves high PSNR/SSIM, its reconstructions are overly smooth and lack fine
+              details. Diffusion-based methods and FMCT/EFMCT produce visually sharper and more detailed
+              reconstructions, though they do not always exactly match the reference. This behavior is
+              expected in sparse-view CT, where the problem is severely ill-posed and multiple
+              reconstructions can satisfy the measurements. Generative methods balance data consistency
+              with adherence to the learned prior, which may lead to small deviations in fine-scale details.
+            </p>
+          </details>
         </div>
       </div>
     </div>
@@ -683,21 +738,27 @@
             Both ablations use 21 randomly selected test CT images with the total number of sampling
             iterations fixed to 50.
           </p>
-          <p>
-            <b>When to start reusing.</b> Fixing the maximum number of consecutive reuse steps to 10 and
-            varying the iteration at which reuse is enabled, enabling reuse too early leads to an initial
-            drop in reconstruction performance, whereas delaying reuse to later iterations gradually
-            improves PSNR and SSIM. Early-stage sampling is more sensitive to approximation errors, while
-            reuse becomes safer once the reconstruction has approached a more stable trajectory —
-            velocity reuse is therefore better suited to mid- or late-stage sampling.
-          </p>
-          <p>
-            <b>How long to reuse.</b> Enabling reuse from the first iteration and varying the maximum number
-            of allowed consecutive reuse steps, increasing the reuse limit initially improves PSNR and SSIM,
-            indicating that moderate reuse does not adversely affect reconstruction quality. However,
-            allowing excessive consecutive reuse degrades performance, revealing a trade-off between
-            reconstruction quality and computational efficiency.
-          </p>
+          <details class="expand">
+            <summary>When to start reusing</summary>
+            <p>
+              Fixing the maximum number of consecutive reuse steps to 10 and varying the iteration at which
+              reuse is enabled, enabling reuse too early leads to an initial drop in reconstruction
+              performance, whereas delaying reuse to later iterations gradually improves PSNR and SSIM.
+              Early-stage sampling is more sensitive to approximation errors, while reuse becomes safer once
+              the reconstruction has approached a more stable trajectory &mdash; velocity reuse is therefore
+              better suited to mid- or late-stage sampling.
+            </p>
+          </details>
+          <details class="expand">
+            <summary>How long to reuse</summary>
+            <p>
+              Enabling reuse from the first iteration and varying the maximum number of allowed consecutive
+              reuse steps, increasing the reuse limit initially improves PSNR and SSIM, indicating that
+              moderate reuse does not adversely affect reconstruction quality. However, allowing excessive
+              consecutive reuse degrades performance, revealing a trade-off between reconstruction quality
+              and computational efficiency.
+            </p>
+          </details>
           <p>
             For all EFMCT results we adopt a reuse strategy that <b>enables velocity reuse after the first
             iteration and allows up to 10 consecutive reuse steps</b>.
