@@ -1,4 +1,4 @@
-**Efficient Flow Matching for Sparse-View CT Reconstruction** (MICCAI 2026)
+**[Efficient Flow Matching for Sparse-View CT Reconstruction](https://arxiv.org/abs/2603.00205)** (MICCAI 2026)
 
 Jiayang Shi, Lincen Yang, Zhong Li, Tristan van Leeuwen, Daniel M. Pelt, K. Joost Batenburg
 
@@ -16,6 +16,7 @@ Generative models, particularly Diffusion Models (DM), have shown strong potenti
   - [EFMCT (velocity reuse)](#efmct-velocity-reuse)
   - [Diffusion-Based Baselines](#diffusion-based-baselines)
 - [Training Flow Matching from Scratch](#training-flow-matching-from-scratch)
+- [Citation](#citation)
 
 ## Environment Requirements
 - At least one Nvidia GPU for training/inference.
@@ -67,3 +68,16 @@ For diffusion-based comparison methods, please refer to the [DM4CT Benchmark](ht
 
 ## Training Flow Matching from Scratch
 Training a flow matching model from scratch can be performed using [train_flow.py](train_flow.py).
+
+## Citation
+If you find this work useful, please cite:
+
+```bibtex
+@article{shi2026efficient,
+  title={Efficient Flow Matching for Sparse-View {CT} Reconstruction},
+  author={Shi, Jiayang and Yang, Lincen and Li, Zhong and van Leeuwen, Tristan
+          and Pelt, Dani{\"e}l M. and Batenburg, K. Joost},
+  journal={arXiv preprint arXiv:2603.00205},
+  year={2026}
+}
+```
