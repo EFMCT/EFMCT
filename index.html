@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="EFMCT: Efficient Flow Matching for Sparse-View CT Reconstruction">
+  <meta name="keywords" content="Computed Tomography, Flow Matching, Sparse-View CT, Inverse Problems, Generative Models">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Efficient Flow Matching for Sparse-View CT Reconstruction</title>
+
+  <meta property="og:title" content="Efficient Flow Matching for Sparse-View CT Reconstruction">
+  <meta property="og:description"
+        content="FMCT / EFMCT: flow-matching CT reconstruction with velocity reuse — competitive quality at up to 89% fewer neural function evaluations.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="./static/images/method.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Efficient Flow Matching for Sparse-View CT Reconstruction">
+  <meta name="twitter:description"
+        content="FMCT / EFMCT: flow-matching CT reconstruction with velocity reuse — competitive quality at up to 89% fewer neural function evaluations.">
+  <meta name="twitter:image" content="./static/images/method.png">
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        macros: { bm: ['\\boldsymbol{#1}', 1] }
+      },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+  <style>
+      .results-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 20px auto;
+          font-size: 0.78rem;
+          vertical-align: middle;
+      }
+      .results-table th, .results-table td {
+          border: 1px solid #d0d0d0;
+          padding: 5px 7px;
+          text-align: center;
+          vertical-align: middle;
+          white-space: nowrap;
+      }
+      .results-table thead th {
+          background-color: #f2f2f2;
+          font-weight: 600;
+      }
+      .results-table tbody tr.group-start td,
+      .results-table tbody tr.group-start th {
+          border-top: 2px solid #7a7a7a;
+      }
+      .results-table td.dataset {
+          background-color: #fafafa;
+          font-weight: 600;
+          writing-mode: vertical-rl;
+          transform: rotate(180deg);
+          white-space: nowrap;
+      }
+      .results-table tr.ours {
+          background-color: #eef4fb;
+      }
+      .results-table .best { font-weight: 700; }
+      .results-table .second { text-decoration: underline; }
+      .results-table .std { color: #777; font-size: 0.92em; }
+      .results-table .gain { color: #1f6f3d; font-size: 0.92em; }
+      .table-wrapper { overflow-x: auto; }
+      .table-note { font-size: 0.85rem; color: #555; }
+      .eq-block {
+          margin: 1.1rem 0;
+          text-align: center;
+      }
+      .takeaway {
+          border-left: 4px solid #3273dc;
+          background: #f6f9fe;
+          padding: 0.9rem 1.1rem;
+          margin: 1.2rem 0;
+      }
+      .fig-caption {
+          font-size: 0.92rem;
+          color: #4a4a4a;
+          margin-top: 0.6rem;
+      }
+      .publication-title { margin-bottom: 0.8rem !important; }
+      .stats {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 1rem;
+          margin-top: 1.6rem;
+      }
+      .stat {
+          flex: 1 1 190px;
+          max-width: 240px;
+          border: 1px solid #e2e6ec;
+          border-radius: 8px;
+          padding: 0.9rem 0.8rem;
+          background: #fbfcfe;
+      }
+      .stat .num {
+          font-size: 1.6rem;
+          font-weight: 700;
+          color: #2b5fa8;
+          line-height: 1.1;
+      }
+      .stat .lbl {
+          font-size: 0.82rem;
+          color: #555;
+          margin-top: 0.3rem;
+      }
+      .breakout {
+          width: min(1200px, 94vw);
+          margin-left: 50%;
+          transform: translateX(-50%);
+      }
+      #BibTeX pre {
+          white-space: pre-wrap;
+          word-break: break-word;
+      }
+      @media screen and (max-width: 768px) {
+          .breakout { width: 100%; margin-left: 0; transform: none; }
+          .results-table { font-size: 0.68rem; }
+          .results-table th, .results-table td { padding: 3px 4px; }
+          .results-table td.dataset { writing-mode: horizontal-tb; transform: none; }
+          .publication-links .link-block { display: inline-block; margin-bottom: 0.4rem; }
+          .wide-fig { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+          .wide-fig img { min-width: 680px; max-width: none; width: 680px; }
+          .wide-fig::after {
+              content: "swipe horizontally to explore \2192";
+              display: block;
+              font-size: 0.72rem;
+              color: #888;
+              padding-top: 0.2rem;
+          }
+      }
+  </style>
+
+  </head>
+
+<body>
+
+<section class="hero banner">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-2 publication-title">Efficient Flow Matching for Sparse-View CT Reconstruction</h1>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://jiayangshi.github.io">Jiayang Shi</a><sup>1,2</sup>,
+            </span>
+            <span class="author-block">
+              Lincen Yang<sup>1</sup>,
+            </span>
+            <span class="author-block">
+              Zhong Li<sup>1,3</sup>,
+            </span>
+            <span class="author-block">
+              Tristan van Leeuwen<sup>2,4</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://dmpelt.github.io">Daniël M. Pelt</a><sup>1</sup>,
+            </span>
+            <span class="author-block">
+              <a href="https://www.universiteitleiden.nl/medewerkers/joost-batenburg">K. Joost Batenburg</a><sup>1</sup>
+            </span>
+          </div>
+
+          <div class="is-size-6 publication-authors" style="margin-top: 0.5rem;">
+            <span class="author-block"><sup>1</sup>LIACS, Leiden University</span> &nbsp;&nbsp;
+            <span class="author-block"><sup>2</sup>Centrum Wiskunde &amp; Informatica</span> &nbsp;&nbsp;
+            <span class="author-block"><sup>3</sup>Great Bay University</span> &nbsp;&nbsp;
+            <span class="author-block"><sup>4</sup>Mathematical Institute, Utrecht University</span>
+          </div>
+
+          <div class="is-size-4" style="margin-top: 1rem;">MICCAI 2026</div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- arXiv Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2603.00205"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2603.00205"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/EFMCT/EFMCT"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+              <!-- Models Link. -->
+              <span class="link-block">
+                <a href="https://github.com/EFMCT/EFMCT#pretrained-flow-matching-models"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-cube"></i>
+                  </span>
+                  <span>Pretrained Models</span>
+                  </a>
+              </span>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="num">7&ndash;11</div>
+              <div class="lbl">NFEs for EFMCT, versus 50&ndash;1000 for diffusion baselines</div>
+            </div>
+            <div class="stat">
+              <div class="num">&darr; 89%</div>
+              <div class="lbl">fewer network evaluations than the most efficient diffusion method</div>
+            </div>
+            <div class="stat">
+              <div class="num">&darr; 78%</div>
+              <div class="lbl">reconstruction time, at competitive PSNR&nbsp;/&nbsp;SSIM</div>
+            </div>
+            <div class="stat">
+              <div class="num">0.83 s</div>
+              <div class="lbl">per 512&times;512 slice on an RTX 4090 (AAPM)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="hero-body">
+    <div class="container has-text-centered">
+      <div class="wide-fig">
+        <img src="./static/images/method.png"
+          class="interpolation-image"
+          alt="Overview of FMCT and EFMCT."
+          width="95%"/>
+      </div>
+
+        <div class="content has-text-justified">
+          <p class="fig-caption" style="margin-left: 10%; margin-right: 10%;">
+            Overview of the proposed <b>FMCT</b> (left) and <b>EFMCT</b> (right). FMCT integrates a
+            pretrained flow matching ODE from noise $\bm{x}_1$ to a full-view CT image $\bm{x}_0$, and
+            interleaves every Euler step with a physics-based data consistency correction. EFMCT reuses a
+            previously predicted velocity field over several consecutive steps, so most steps cost no
+            neural network evaluation at all; the small deviation this introduces is absorbed by the same
+            data consistency correction.
+          </p>
+        </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="abstract">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+          Generative models, particularly Diffusion Models (DM), have shown strong potential for Computed
+          Tomography (CT) reconstruction serving as expressive priors for solving ill-posed inverse
+          problems. However, diffusion-based reconstruction relies on Stochastic Differential Equations
+          (SDEs) for forward diffusion and reverse denoising, where such stochasticity can interfere with
+          repeated data consistency corrections in CT reconstruction. Since CT reconstruction is often
+          time-critical in clinical and interventional scenarios, improving reconstruction efficiency is
+          essential. In contrast, Flow Matching (FM) models sampling as a deterministic Ordinary
+          Differential Equation (ODE), yielding smooth trajectories without stochastic noise injection.
+          This deterministic formulation is naturally compatible with repeated data consistency operations.
+          Furthermore, we observe that FM-predicted velocity fields exhibit strong correlations across
+          adjacent steps. Motivated by this, we propose an FM-based CT reconstruction framework (FMCT) and
+          an efficient variant (EFMCT) that reuses previously predicted velocity fields over consecutive
+          steps to substantially reduce the number of Neural network Function Evaluations (NFEs), thereby
+          improving inference efficiency. We provide theoretical analysis showing that the error introduced
+          by velocity reuse is bounded when combined with data consistency operations. Extensive
+          experiments demonstrate that FMCT/EFMCT achieve competitive reconstruction quality while
+          significantly improving computational efficiency compared with diffusion-based methods. The
+          codebase is open-sourced at
+          <a href="https://github.com/EFMCT/EFMCT">github.com/EFMCT/EFMCT</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="contributions" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Contributions</h2>
+        <div class="content has-text-justified">
+          <ol>
+            <li>To the best of our knowledge, the <b>first flow-matching-based framework for CT
+              reconstruction</b> (FMCT).</li>
+            <li>A <b>velocity field reuse strategy</b> (EFMCT) that significantly improves the efficiency of
+              FM-based CT reconstruction by reducing the required NFEs.</li>
+            <li>A proof that the <b>single-step reuse error is of the same order as Euler discretization</b>,
+              and does not alter the overall convergence behavior under bounded consecutive reuse steps.</li>
+            <li>Extensive experiments demonstrating the reconstruction performance and efficiency of the
+              proposed FM-based CT reconstruction method.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="motivation" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Motivation</h2>
+
+        <div class="content has-text-centered wide-fig">
+          <img src="./static/images/motivation.png" width="100%" loading="lazy"
+               alt="Cosine similarity of consecutive velocity fields, and reconstruction quality versus NFE.">
+        </div>
+        <div class="content has-text-justified">
+          <p class="fig-caption">
+            <b>Left:</b> cosine similarity of predicted velocity fields at consecutive iterations in FMCT,
+            with and without data consistency correction, showing strong correlation across adjacent steps.
+            <b>Right:</b> reconstruction performance vs. NFE for DM methods and FMCT/EFMCT, demonstrating
+            that FMCT/EFMCT achieve competitive quality at substantially lower NFEs. DM methods here use the
+            deterministic DDIM sampler for fairness; DPS/MCG results with the original 1000-step DDPM
+            sampler are shown as isolated points. Results are averaged over the same randomly selected 21
+            reconstructions from the AAPM dataset across all iteration settings; shaded regions indicate
+            standard deviation.
+          </p>
+        </div>
+
+        <div class="content has-text-justified">
+          <p>
+            Diffusion-based reconstruction models both the forward and the reverse process as an SDE. The
+            repeated data consistency corrections that CT reconstruction requires interfere with that
+            stochastic evolution, producing a <i>push-and-pull</i> effect between prior-driven denoising and
+            physics-based correction. In practice this costs iterations: diffusion solvers typically need
+            hundreds to thousands of NFEs.
+          </p>
+          <p>
+            Flow matching instead transports probability mass deterministically along an ODE. Sampling
+            follows a smooth trajectory with no noise injection, which interacts far more coherently with
+            repeated data consistency corrections. Moreover, the velocity fields predicted along that
+            trajectory stay <b>almost perfectly aligned between neighbouring steps</b> — the cosine
+            similarity remains above 0.99 for nearly the entire trajectory, and stays that way even when a
+            data consistency correction is applied in between. Re-evaluating the network at every single
+            integration step is therefore largely redundant.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="method" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Method</h2>
+
+        <h3 class="title is-4">FMCT: Flow Matching for CT Reconstruction</h3>
+        <div class="content has-text-justified">
+          <p>
+            CT reconstruction recovers an object $\bm{x}\in\mathbb{R}^m$ from projections
+            $\bm{y}=\bm{A}\bm{x}$, where $\bm{A}\in\mathbb{R}^{n\times m}$ is set by the acquisition
+            geometry. In sparse-view CT, $n < m$, so the problem is underdetermined and ill-posed.
+          </p>
+          <p>
+            We use a conditional linear flow (Rectified Flow) trained on full-view CT images, so that
+            $\bm{x}_t = (1-t)\bm{x}_0 + t\bm{x}_1$ with $\bm{x}_1\sim\mathcal{N}(\bm{0},\bm{I})$, and a
+            network $\bm{v}_t^{\bm{\theta}}$ predicts the velocity. Given the pretrained model, each
+            reconstruction step has three components.
+          </p>
+          <p><b>1. Flow transport</b> — an explicit Euler update along the learned velocity field:</p>
+          <div class="eq-block">
+            $$\bm{x}_{t-\Delta t}^{\prime} = \bm{x}_t - \Delta t\,\bm{v}_t^{\bm{\theta}}(\bm{x}_t).$$
+          </div>
+          <p><b>2. Data consistency</b> — extrapolate to the terminal sample and refine it against the
+            measurement (we use conjugate gradient, but the framework accepts any DC scheme):</p>
+          <div class="eq-block">
+            $$\hat{\bm{x}}_0 = \bm{x}_t - t\,\bm{v}_t^{\bm{\theta}}(\bm{x}_t),\qquad
+              \bm{v}_{\mathcal{DC}} = \mathcal{DC}(\hat{\bm{x}}_0, \bm{y}, \bm{A}).$$
+          </div>
+          <p><b>3. Correction</b> — apply the measurement-aware direction to the transported state:</p>
+          <div class="eq-block">
+            $$\bm{x}_{t-\Delta t} = \bm{x}_{t-\Delta t}^{\prime} + \bm{v}_{\mathcal{DC}}.$$
+          </div>
+          <p>These steps repeat until $t=0$ to give the final reconstruction.</p>
+        </div>
+
+        <h3 class="title is-4">EFMCT: Velocity Reuse for Efficient Sampling</h3>
+        <div class="content has-text-justified">
+          <p>
+            Because consecutive velocities are nearly identical, EFMCT computes
+            $\bm{v}_t = \bm{v}_t^{\bm{\theta}}(\bm{x}_t)$ once and <b>reuses it for up to $M$ consecutive
+            steps</b>:
+          </p>
+          <div class="eq-block">
+            $$\bm{x}_{t-(j+1)\Delta t}^{\prime} = \bm{x}_{t-j\Delta t} - \Delta t\,\bm{v}_t,
+              \qquad j\in[1, M].$$
+          </div>
+          <p>
+            Since $\bm{v}_t$ is reused without additional network evaluations, this directly reduces NFEs.
+            To keep the sampler stable and data-faithful, an <b>adaptive refinement check</b> guards every
+            reuse step:
+          </p>
+          <div class="eq-block">
+            $$\|\bm{A}\bm{x}_{t-(j+1)\Delta t}^{\prime} - \bm{y}\|^2 \;\leq\;
+              \eta\,\|\bm{A}\bm{x}_{t-j\Delta t}^{\prime} - \bm{y}\|^2,$$
+          </div>
+          <p>
+            where $\eta > 1$ is a relaxation factor, empirically set to $\eta = 1.05$. If the condition is
+            violated, reuse is terminated and the velocity is recomputed by the network. This mechanism
+            balances efficiency against reconstruction accuracy.
+          </p>
+        </div>
+
+        <h3 class="title is-4">Theory: the Reuse Error Is Bounded</h3>
+        <div class="content has-text-justified">
+          <div class="takeaway">
+            <p style="margin-bottom: 0;">
+              <b>Proposition 1.</b> Assume $\bm{v}$ is locally Lipschitz in both $\bm{x}$ and $t$. Then for
+              a single reuse step, the local deviation between the reuse update $\hat{\bm{x}}_{k+1}$ and the
+              standard Euler update $\bm{x}_{k+1}$ satisfies
+              $\|\hat{\bm{x}}_{k+1} - \bm{x}_{k+1}\| = \mathcal{O}(\Delta t^2)$, i.e. velocity reuse
+              introduces a local error of the same order as the Euler discretization itself. Moreover, if
+              the same velocity is reused for at most $M$ consecutive steps (independent of $\Delta t$) and
+              each step is followed by a non-expansive data-consistency operator, the deviation after one
+              reuse block is $\mathcal{O}(M^2\Delta t^2)$, and over any fixed time horizon it is
+              $\mathcal{O}(\Delta t)$.
+            </p>
+          </div>
+          <p>
+            The proposition implies that reusing previously predicted velocity fields <b>preserves the
+            first-order accuracy</b> of the FM discretization. When the reuse length is bounded, the
+            accumulated error remains controlled over a fixed time horizon. The full proof is given in the
+            appendix of the paper.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="results" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Results</h2>
+
+        <div class="content has-text-justified">
+          <p>
+            We evaluate on two public datasets: the <b>AAPM 2016 Low Dose CT Grand Challenge</b> dataset
+            (512×512, nine patients for training, patient L506 held out for testing) and the
+            <b>Medical Segmentation Decathlon</b> CT dataset (Task_06 Lung, 512×512, ten patients for
+            training, patient 017 for testing). Sparse-view measurements with 20 and 40 views are simulated
+            with the ASTRA Toolbox under a parallel-beam geometry. Baselines are FBP, ADMM-TV, and four
+            representative diffusion solvers: DPS, MCG, PGDM, and DDS.
+          </p>
+        </div>
+
+        <h3 class="title is-4">Quantitative Comparison</h3>
+        <div class="table-wrapper breakout">
+          <table class="results-table">
+            <thead>
+              <tr>
+                <th rowspan="2">Dataset</th>
+                <th rowspan="2">Method</th>
+                <th colspan="3">40 views</th>
+                <th colspan="3">20 views</th>
+                <th rowspan="2">NFE<sup>*</sup></th>
+                <th rowspan="2">Time / s</th>
+              </tr>
+              <tr>
+                <th>PSNR ↑</th><th>SSIM ↑</th><th>Data Fit ↓</th>
+                <th>PSNR ↑</th><th>SSIM ↑</th><th>Data Fit ↓</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="group-start">
+                <td class="dataset" rowspan="8">AAPM</td>
+                <td>FBP</td>
+                <td>26.98<span class="std">±0.45</span></td>
+                <td>0.691<span class="std">±0.027</span></td>
+                <td>2783.64<span class="std">±233.30</span></td>
+                <td>24.01<span class="std">±0.49</span></td>
+                <td>0.547<span class="std">±0.029</span></td>
+                <td>1798.77<span class="std">±171.00</span></td>
+                <td>–</td>
+                <td>0.02</td>
+              </tr>
+              <tr>
+                <td>ADMM-TV</td>
+                <td><span class="best">31.94</span><span class="std">±0.42</span></td>
+                <td><span class="best">0.836</span><span class="std">±0.027</span></td>
+                <td><span class="second">22.11</span><span class="std">±2.29</span></td>
+                <td>29.45<span class="std">±0.46</span></td>
+                <td><span class="best">0.798</span><span class="std">±0.029</span></td>
+                <td><span class="second">17.53</span><span class="std">±2.00</span></td>
+                <td>–</td>
+                <td>9.85</td>
+              </tr>
+              <tr>
+                <td>DPS</td>
+                <td>30.05<span class="std">±0.69</span></td>
+                <td>0.795<span class="std">±0.033</span></td>
+                <td>261.35<span class="std">±20.58</span></td>
+                <td>28.78<span class="std">±0.81</span></td>
+                <td>0.764<span class="std">±0.032</span></td>
+                <td>142.93<span class="std">±35.99</span></td>
+                <td>1000</td>
+                <td>142.16</td>
+              </tr>
+              <tr>
+                <td>MCG</td>
+                <td>30.00<span class="std">±0.79</span></td>
+                <td>0.791<span class="std">±0.032</span></td>
+                <td>198.07<span class="std">±14.20</span></td>
+                <td>27.57<span class="std">±0.42</span></td>
+                <td>0.736<span class="std">±0.031</span></td>
+                <td>180.83<span class="std">±11.87</span></td>
+                <td>1000</td>
+                <td>143.44</td>
+              </tr>
+              <tr>
+                <td>PGDM</td>
+                <td>30.26<span class="std">±0.61</span></td>
+                <td>0.803<span class="std">±0.030</span></td>
+                <td>208.98<span class="std">±13.72</span></td>
+                <td>29.43<span class="std">±0.60</span></td>
+                <td>0.775<span class="std">±0.031</span></td>
+                <td>106.51<span class="std">±5.30</span></td>
+                <td>100</td>
+                <td>29.79</td>
+              </tr>
+              <tr>
+                <td>DDS</td>
+                <td>31.06<span class="std">±0.40</span></td>
+                <td><span class="second">0.834</span><span class="std">±0.030</span></td>
+                <td><span class="best">19.09</span><span class="std">±1.14</span></td>
+                <td>29.21<span class="std">±0.36</span></td>
+                <td>0.785<span class="std">±0.031</span></td>
+                <td><span class="best">9.87</span><span class="std">±0.61</span></td>
+                <td>50</td>
+                <td>3.83</td>
+              </tr>
+              <tr class="ours">
+                <td><b>FMCT</b> (ours)</td>
+                <td><span class="second">31.63</span><span class="std">±0.39</span></td>
+                <td>0.810<span class="std">±0.031</span></td>
+                <td><span class="second">60.57</span><span class="std">±18.52</span></td>
+                <td><span class="best">29.98</span><span class="std">±0.23</span></td>
+                <td>0.769<span class="std">±0.030</span></td>
+                <td>46.46<span class="std">±14.86</span></td>
+                <td><span class="second">25</span> <span class="gain">↓50%</span></td>
+                <td><span class="second">1.92</span> <span class="gain">↓50%</span></td>
+              </tr>
+              <tr class="ours">
+                <td><b>EFMCT</b> (ours)</td>
+                <td>31.52<span class="std">±0.28</span></td>
+                <td>0.832<span class="std">±0.027</span></td>
+                <td>182.80<span class="std">±104.39</span></td>
+                <td><span class="second">29.52</span><span class="std">±0.23</span></td>
+                <td><span class="second">0.795</span><span class="std">±0.027</span></td>
+                <td>111.41<span class="std">±79.80</span></td>
+                <td><span class="best">7</span> <span class="gain">↓75%</span></td>
+                <td><span class="best">0.83</span> <span class="gain">↓78%</span></td>
+              </tr>
+
+              <tr class="group-start">
+                <td class="dataset" rowspan="8">Decathlon</td>
+                <td>FBP</td>
+                <td>28.01<span class="std">±0.76</span></td>
+                <td>0.763<span class="std">±0.037</span></td>
+                <td>2772.79<span class="std">±434.36</span></td>
+                <td>24.85<span class="std">±0.96</span></td>
+                <td>0.618<span class="std">±0.039</span></td>
+                <td>1731.97<span class="std">±305.77</span></td>
+                <td>–</td>
+                <td>0.02</td>
+              </tr>
+              <tr>
+                <td>ADMM-TV</td>
+                <td>34.40<span class="std">±1.23</span></td>
+                <td>0.900<span class="std">±0.021</span></td>
+                <td><span class="second">15.73</span><span class="std">±0.55</span></td>
+                <td>30.26<span class="std">±1.03</span></td>
+                <td>0.851<span class="std">±0.028</span></td>
+                <td><span class="second">14.76</span><span class="std">±0.50</span></td>
+                <td>–</td>
+                <td>9.85</td>
+              </tr>
+              <tr>
+                <td>DPS</td>
+                <td>33.85<span class="std">±1.25</span></td>
+                <td>0.870<span class="std">±0.018</span></td>
+                <td>250.11<span class="std">±18.61</span></td>
+                <td>31.69<span class="std">±1.44</span></td>
+                <td>0.842<span class="std">±0.025</span></td>
+                <td>121.25<span class="std">±18.57</span></td>
+                <td>1000</td>
+                <td>142.16</td>
+              </tr>
+              <tr>
+                <td>MCG</td>
+                <td>30.03<span class="std">±1.20</span></td>
+                <td>0.824<span class="std">±0.030</span></td>
+                <td>301.17<span class="std">±35.25</span></td>
+                <td>28.67<span class="std">±1.26</span></td>
+                <td>0.798<span class="std">±0.038</span></td>
+                <td>198.22<span class="std">±22.68</span></td>
+                <td>1000</td>
+                <td>143.44</td>
+              </tr>
+              <tr>
+                <td>PGDM</td>
+                <td>34.78<span class="std">±1.23</span></td>
+                <td>0.899<span class="std">±0.014</span></td>
+                <td>147.10<span class="std">±15.20</span></td>
+                <td>31.82<span class="std">±1.19</span></td>
+                <td>0.860<span class="std">±0.018</span></td>
+                <td>132.96<span class="std">±13.69</span></td>
+                <td>100</td>
+                <td>29.79</td>
+              </tr>
+              <tr>
+                <td>DDS</td>
+                <td><span class="best">37.66</span><span class="std">±1.20</span></td>
+                <td><span class="second">0.923</span><span class="std">±0.009</span></td>
+                <td><span class="best">15.10</span><span class="std">±9.29</span></td>
+                <td>33.00<span class="std">±1.29</span></td>
+                <td><span class="second">0.873</span><span class="std">±0.018</span></td>
+                <td><span class="best">5.01</span><span class="std">±0.36</span></td>
+                <td>100</td>
+                <td>7.65</td>
+              </tr>
+              <tr class="ours">
+                <td><b>FMCT</b> (ours)</td>
+                <td><span class="second">37.65</span><span class="std">±1.53</span></td>
+                <td>0.912<span class="std">±0.020</span></td>
+                <td>334.44<span class="std">±74.21</span></td>
+                <td><span class="best">33.41</span><span class="std">±1.57</span></td>
+                <td>0.841<span class="std">±0.036</span></td>
+                <td>294.97<span class="std">±58.87</span></td>
+                <td><span class="second">50</span> <span class="gain">↓50%</span></td>
+                <td><span class="second">4.09</span> <span class="gain">↓47%</span></td>
+              </tr>
+              <tr class="ours">
+                <td><b>EFMCT</b> (ours)</td>
+                <td>37.56<span class="std">±1.37</span></td>
+                <td><span class="best">0.940</span><span class="std">±0.014</span></td>
+                <td>621.99<span class="std">±48.99</span></td>
+                <td><span class="second">33.21</span><span class="std">±1.29</span></td>
+                <td><span class="best">0.888</span><span class="std">±0.024</span></td>
+                <td>470.58<span class="std">±33.62</span></td>
+                <td><span class="best">11</span> <span class="gain">↓89%</span></td>
+                <td><span class="best">1.72</span> <span class="gain">↓78%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="content has-text-justified">
+          <p class="table-note">
+            Mean and standard deviation are reported for PSNR, SSIM, and data fidelity. The best average
+            result for each metric is shown in <b>bold</b>, and the second best is <span
+            class="second">underlined</span>. NFE<sup>*</sup> counts only neural network forward
+            evaluations. The percentages indicate the efficiency improvement in NFE and computation time
+            (on an RTX 4090) of FMCT/EFMCT compared with the most efficient diffusion-based method.
+          </p>
+        </div>
+
+        <div class="takeaway">
+          <p style="margin-bottom: 0;">
+            FMCT/EFMCT are often among the highest PSNR and SSIM across datasets and view configurations
+            while requiring substantially fewer NFEs and lower computation time than diffusion-based
+            baselines. ADMM-TV and DDS achieve the best and second-best data fidelity, reflecting their
+            strong emphasis on measurement consistency. Compared with FMCT, EFMCT shows a slight reduction
+            in PSNR and data fidelity but comparable or improved SSIM — with a significant efficiency
+            improvement, down to <b>7 NFEs and 0.83 s</b> per slice on AAPM.
+          </p>
+        </div>
+
+        <h3 class="title is-4">Visual Comparison</h3>
+        <div class="content has-text-centered breakout wide-fig">
+          <a href="./static/images/result.pdf">
+            <img src="./static/images/result.png" width="100%" loading="lazy"
+                 alt="Visual comparison of reconstructions across methods, datasets and view counts.">
+          </a>
+        </div>
+        <div class="content has-text-justified">
+          <p class="fig-caption">
+            Visual comparison of reconstructions across different methods, datasets, and views. PSNR, SSIM,
+            and reconstruction time are shown in the lower-left, lower-right, and upper-right corners of
+            each image, respectively. We visualize only the best three diffusion-based methods for better
+            visibility. Zoom in for more details
+            (<a href="./static/images/result.pdf">full-resolution PDF</a>).
+          </p>
+          <p>
+            Although ADMM-TV achieves high PSNR/SSIM, its reconstructions are overly smooth and lack fine
+            details. Diffusion-based methods and FMCT/EFMCT produce visually sharper and more detailed
+            reconstructions, though they do not always exactly match the reference. This behavior is
+            expected in sparse-view CT, where the problem is severely ill-posed and multiple reconstructions
+            can satisfy the measurements. Generative methods balance data consistency with adherence to the
+            learned prior, which may lead to small deviations in fine-scale details.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="ablation" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered">
+      <div class="column is-full-width">
+        <h2 class="title is-3 has-text-centered">Ablation: When and How Much to Reuse</h2>
+
+        <div class="content has-text-centered wide-fig">
+          <img src="./static/images/ablation.png" width="100%" loading="lazy"
+               alt="Ablation of the velocity reuse strategy.">
+        </div>
+        <div class="content has-text-justified">
+          <p class="fig-caption">
+            Ablation of the velocity reuse strategy. <b>Left:</b> reuse enabled after different iteration
+            indices. <b>Right:</b> varying the maximum number of consecutive reuse steps. Shaded regions
+            indicate standard deviation.
+          </p>
+          <p>
+            Both ablations use 21 randomly selected test CT images with the total number of sampling
+            iterations fixed to 50.
+          </p>
+          <p>
+            <b>When to start reusing.</b> Fixing the maximum number of consecutive reuse steps to 10 and
+            varying the iteration at which reuse is enabled, enabling reuse too early leads to an initial
+            drop in reconstruction performance, whereas delaying reuse to later iterations gradually
+            improves PSNR and SSIM. Early-stage sampling is more sensitive to approximation errors, while
+            reuse becomes safer once the reconstruction has approached a more stable trajectory —
+            velocity reuse is therefore better suited to mid- or late-stage sampling.
+          </p>
+          <p>
+            <b>How long to reuse.</b> Enabling reuse from the first iteration and varying the maximum number
+            of allowed consecutive reuse steps, increasing the reuse limit initially improves PSNR and SSIM,
+            indicating that moderate reuse does not adversely affect reconstruction quality. However,
+            allowing excessive consecutive reuse degrades performance, revealing a trade-off between
+            reconstruction quality and computational efficiency.
+          </p>
+          <p>
+            For all EFMCT results we adopt a reuse strategy that <b>enables velocity reuse after the first
+            iteration and allows up to 10 consecutive reuse steps</b>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="conclusion" style="padding-top: 0;">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Conclusion</h2>
+        <div class="content has-text-justified">
+          <p>
+            We proposed FMCT/EFMCT, representing the first application of flow matching to CT
+            reconstruction. By exploiting the deterministic transport structure of flow matching, we
+            introduced a velocity reuse strategy that substantially reduces NFEs. We provided theoretical
+            analysis showing that the error introduced by velocity reuse is of the same order as Euler
+            discretization and remains bounded when combined with explicit data consistency operations.
+            Extensive experiments on multiple datasets demonstrate that FMCT/EFMCT achieve competitive
+            reconstruction quality while significantly improving computational efficiency compared with
+            diffusion-based methods. We believe the proposed framework offers a practical and principled
+            approach toward efficient generative CT reconstruction, with the potential to facilitate the
+            deployment of advanced reconstruction methodologies in real-world clinical settings.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="Code" style="padding-top: 0;">
+  <div class="container is-max-desktop content">
+    <h2 class="title is-3 has-text-centered">Code</h2>
+    <p>
+      The full codebase — training, reconstruction, and pretrained flow matching models for both datasets —
+      is available at <a href="https://github.com/EFMCT/EFMCT">github.com/EFMCT/EFMCT</a>. FMCT and EFMCT
+      share a single reconstruction script; the two are selected purely by their sampling parameters:
+    </p>
+    <div class="table-wrapper">
+      <table class="results-table" style="font-size: 0.85rem;">
+        <thead>
+          <tr>
+            <th>Setting</th>
+            <th>num_inference_steps</th>
+            <th>skip_after</th>
+            <th>max_skips_in_a_row</th>
+            <th>eta ($\eta$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>FMCT</b> (no velocity reuse)</td>
+            <td>50</td><td>50</td><td>any</td><td>any</td>
+          </tr>
+          <tr class="ours">
+            <td><b>EFMCT</b> (velocity reuse)</td>
+            <td>50</td><td>0</td><td>10</td><td>1.05</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      For the diffusion-based comparison methods, please refer to the
+      <a href="https://github.com/DM4CT/DM4CT">DM4CT benchmark</a> repository.
+    </p>
+  </div>
+</section>
+
+<section class="section" id="BibTeX" style="padding-top: 0;">
+  <div class="container is-max-desktop content">
+    <h2 class="title is-3 has-text-centered">BibTeX</h2>
+    <pre>@article{shi2026efficient,
+  title={Efficient Flow Matching for Sparse-View {CT} Reconstruction},
+  author={Shi, Jiayang and Yang, Lincen and Li, Zhong and van Leeuwen, Tristan
+          and Pelt, Dani{\"e}l M. and Batenburg, K. Joost},
+  journal={arXiv preprint arXiv:2603.00205},
+  year={2026}
+}</pre>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is adapted from
+            <a href="https://github.com/DM4CT/DM4CT/tree/page">DM4CT</a>, which is in turn adapted from
+            <a href="https://github.com/devzhk/InverseBench/tree/site">InverseBench</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
