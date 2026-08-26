@@ -52,7 +52,7 @@
           width: 100%;
           border-collapse: collapse;
           margin: 20px auto;
-          font-size: 0.72rem;
+          font-size: 0.76rem;
           vertical-align: middle;
       }
       .results-table th, .results-table td {
@@ -178,20 +178,14 @@
           color: #555;
           margin-top: 0.3rem;
       }
-      /* Bulma .column is a flex item: without min-width:0 the nowrap table's
-         min-content width stretches the whole section past the container. */
+      /* Bulma .column is a flex item: without min-width:0 a nowrap table's
+         min-content width can stretch the section past its container. */
       #results .column { min-width: 0; }
-      .breakout {
-          width: min(1380px, 96vw);
-          margin-left: 50%;
-          transform: translateX(-50%);
-      }
       #BibTeX pre {
           white-space: pre-wrap;
           word-break: break-word;
       }
       @media screen and (max-width: 768px) {
-          .breakout { width: 100%; margin-left: 0; transform: none; }
           .results-table { font-size: 0.68rem; }
           .results-table th, .results-table td { padding: 3px 4px; }
           .results-table td.dataset span { writing-mode: horizontal-tb; transform: none; }
@@ -559,7 +553,7 @@
         </div>
 
         <h3 class="title is-4">Quantitative Comparison</h3>
-        <div class="table-wrapper breakout">
+        <div class="table-wrapper">
           <table class="results-table">
               <thead>
                 <tr>
@@ -687,7 +681,7 @@
         </div>
 
         <h3 class="title is-4">Visual Comparison</h3>
-        <div class="content has-text-centered breakout wide-fig">
+        <div class="content has-text-centered wide-fig">
           <a href="./static/images/result.pdf">
             <img src="./static/images/result.png" width="100%" loading="lazy"
                  alt="Visual comparison of reconstructions across methods, datasets and view counts.">
