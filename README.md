@@ -41,8 +41,8 @@ A single example image from the Low Dose dataset is included in [here](lodochall
 ## Pretrained Flow Matching Models
 | Dataset | Pretrained model |
 |---------|---------------------------|
-| Low dose challenge | [Flow Matching](https://drive.google.com/drive/folders/1TQEEpSZY4oEeWFMckBhi4kDgdz9wpWcH?usp=share_link) |
-| Decathlon | [Flow Matching](https://drive.google.com/drive/folders/1GRqf-a3qHX1wPrtOwRd3WCILsIvx5wim?usp=share_link) |
+| Low dose challenge | [Flow Matching](https://drive.google.com/drive/folders/1GRqf-a3qHX1wPrtOwRd3WCILsIvx5wim?usp=share_link) |
+| Decathlon | [Flow Matching](https://drive.google.com/drive/folders/1TQEEpSZY4oEeWFMckBhi4kDgdz9wpWcH?usp=share_link) |
 
 
 ## CT Reconstruction
