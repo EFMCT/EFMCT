@@ -14,6 +14,8 @@ Generative models, particularly Diffusion Models (DM), have shown strong potenti
 - [CT Reconstruction](#ct-reconstruction)
   - [FMCT (no velocity reuse)](#fmct-no-velocity-reuse)
   - [EFMCT (velocity reuse)](#efmct-velocity-reuse)
+  - [Reproducing the Paper's Results](#reproducing-the-papers-results)
+  - [Trade-off Between Efficiency and Accuracy](#trade-off-between-efficiency-and-accuracy)
   - [Diffusion-Based Baselines](#diffusion-based-baselines)
 - [Training Flow Matching from Scratch](#training-flow-matching-from-scratch)
 - [Proof of Proposition 1](#proof-of-proposition-1)
@@ -63,6 +65,25 @@ Reconstruction using pretrained models can be executed with [flow_recon.py](flow
 | skip_after | 0 |
 | max_skips_in_a_row| 10 |
 | eta | 1.05 |
+
+### Reproducing the Paper's Results
+The two tables above only show how to switch velocity reuse on and off. The results reported in the paper were obtained with the dataset-specific settings below, which are set at the top of [flow_recon.py](flow_recon.py). Remember to also point `dataset` and `UNet2DModel.from_pretrained(...)` to the matching dataset and pretrained model.
+
+| Dataset | Method | num_inference_steps | skip_after | max_skips_in_a_row | eta | gamma | cg_step_scale | NFE |
+| ------- | ------ | ------------------- | ---------- | ------------------ | --- | ----- | ------------- | --- |
+| Low dose challenge | FMCT | 25 | 25 | any | any | 0.5 | 1 | 25 |
+| Low dose challenge | EFMCT | 50 | 0 | 8 | 1.05 | 0.5 | 1 | ~7 |
+| Decathlon | FMCT | 50 | 50 | any | any | 1 | 1 | 50 |
+| Decathlon | EFMCT | 100 | 0 | 10 | 1.05 | 1 | 0.25 | ~11 |
+
+All experiments use `cg_inner = 5` and `cg_eps = 1e-4`. Since the initial noise is random, PSNR/SSIM can differ slightly from the reported values between runs.
+
+### Trade-off Between Efficiency and Accuracy
+Reconstruction efficiency and reconstruction accuracy are a trade-off, and the settings above are one operating point per dataset rather than universally optimal values. The hyperparameters should be tuned for the specific goal and dataset:
+
+- `num_inference_steps`: more steps generally cost more NFEs and data consistency updates; the best value depends on the dataset and on `cg_step_scale`.
+- `skip_after`, `max_skips_in_a_row`, `eta`: reusing the velocity earlier, for more consecutive steps, or with a looser acceptance threshold lowers the NFE, at the risk of lower accuracy.
+- `gamma`, `cg_inner`, `cg_step_scale`: balance the data consistency correction against the flow matching prior. When using more sampling steps, a smaller `cg_step_scale` may be needed (e.g. 0.25 for EFMCT with 100 steps on Decathlon).
 
 ### Diffusion-Based Baselines
 For diffusion-based comparison methods, please refer to the [DM4CT Benchmark](https://github.com/DM4CT/DM4CT) repository for implementation details.
